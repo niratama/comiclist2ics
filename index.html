@@ -1,0 +1,191 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <link href="http://fonts.googleapis.com/css?family=Open+Sans:regular,semibold,italic,italicsemibold|PT+Sans:400,700,400italic,700italic|PT+Serif:400,700,400italic,700italic" rel="stylesheet" />
+    <link href="css/impress.css" rel="stylesheet" />
+</head>
+<body>
+<div id="impress" class="impress-not-supported">
+    <div class="fallback-message">
+        <p>Your browser <b>doesn't support the features required</b> by impress.js, so you are presented with a simplified version of this presentation.</p>
+        <p>For the best experience please use the latest <b>Chrome</b> or <b>Safari</b> browser. Firefox 10 (to be released soon) will also handle it.</p>
+    </div>
+
+<div id="title" class="step" data-y="0" data-x="0">
+<h1>PerlでiCalendarを出力してみた</h1>
+
+<p>こばやし けんいち</p>
+
+</div>
+<div class="step" data-y="0" data-x="1200">
+<h2>自己紹介</h2>
+
+<ul>
+<li>こばやし けんいち</li>
+<li>Twitter: @Niratama</li>
+<li>携帯サイトやソーシャルゲームでごはん食べてます</li>
+</ul>
+
+</div>
+<div class="step" data-y="0" data-x="2400">
+<h2>iCalendarとは</h2>
+
+<ul>
+<li><a href="http://tools.ietf.org/html/rfc5545">RFC 5545</a>で規定された、スケジュールの標準フォーマット
+<ul>
+<li><a href="http://ja.wikipedia.org/wiki/ICalendar#.E3.82.B3.E3.82.A2.E3.83.BB.E3.82.AA.E3.83.96.E3.82.B8.E3.82.A7.E3.82.AF.E3.83.88">iCalendarデータの例</a></li>
+</ul></li>
+<li>Googleカレンダーにインポートするときに使える←今回の目的</li>
+</ul>
+
+</div>
+<div class="step" data-y="0" data-x="3600">
+<h2>今回の目的</h2>
+
+<ul>
+<li><a href="http://www.sm.rim.or.jp/~suzuki/comics/">コミック新刊ラインアップ</a>のデータをGoogleカレンダーに載せたい
+<ul>
+<li>人間が読むことが前提のテキストファイル</li>
+<li>１ヶ月分のデータが３つのファイルに分割されている</li>
+<li>文字コードはEUC(ただしCP51932)</li>
+</ul></li>
+</ul>
+
+</div>
+<div class="step" data-y="0" data-x="4800">
+<h2>iCalendar関係のモジュール</h2>
+
+<ul>
+<li><a href="https://metacpan.org/module/Data::ICal">Data::ICal</a>
+<ul>
+<li>今回使ってみました</li>
+</ul></li>
+<li><a href="https://metacpan.org/module/Net::ICal">Net::ICal</a>
+<ul>
+<li>最終更新が古かったので保留</li>
+</ul></li>
+<li><a href="https://metacpan.org/release/Tie-iCal">Tie::iCal</a>
+<ul>
+<li>読み込みのみ</li>
+</ul></li>
+<li><a href="https://metacpan.org/release/iCal-Parser">iCal::Parser</a>
+<ul>
+<li>読み込みのみ</li>
+</ul></li>
+</ul>
+
+</div>
+<div class="step" data-y="800" data-x="0">
+<h2>Data::ICalの使用例</h2>
+
+<pre><code>use Data::ICal;
+use Data::ICal::Entry::Event;
+my $cal = Data::ICal-&gt;new;
+my $ev = Data::ICal::Entry::Event-&gt;new;
+$ev-&gt;add_properties(
+  summary =&gt; 'Chiba.pm #1',
+  dtstart =&gt; '20121020',
+  dtend =&gt; '20121021',
+  description =&gt; 'at funabashi, chiba',
+);
+$cal-&gt;add_entry($ev);
+print $cal-&gt;as_string;
+</code></pre>
+
+</div>
+<div class="step" data-y="800" data-x="1200">
+<h2>iCalendarの出力例</h2>
+
+<pre><code>BEGIN:VCALENDAR
+PRODID:Data::ICal 0.18
+VERSION:2.0
+BEGIN:VEVENT
+DESCRIPTION:at funabashi\, chiba
+DTEND:20121021
+DTSTART:20121020
+SUMMARY:Chiba.pm #1
+END:VEVENT
+END:VCALENDAR
+</code></pre>
+
+</div>
+<div class="step" data-y="800" data-x="2400">
+<h2>日付の扱い(1)</h2>
+
+<ul>
+<li>日付の計算があるのでそれ用のモジュールが使いたかった</li>
+<li><a href="https://metacpan.org/release/Date-ICal">Date::ICal</a>
+<ul>
+<li>独自実装</li>
+</ul></li>
+<li><a href="https://metacpan.org/release/Data-ICal-DateTime">Data::ICal::DateTime</a>
+<ul>
+<li>Data::ICalにメソッドを生やす形</li>
+<li>DateTimeを使う</li>
+</ul></li>
+</ul>
+
+</div>
+<div class="step" data-y="800" data-x="3600">
+<h2>日付の扱い(2)</h2>
+
+<ul>
+<li>全日イベントとしてGoogleカレンダーに登録したかった</li>
+<li>DTSTARTやDTENDに時刻が入っていると、全日イベント扱いにはなるものの、イベントに時刻が表示されてしまう。</li>
+<li>Date::ICalもData::ICal::DateTimeも「日時」でしか出力できなかった。</li>
+</ul>
+
+<p><img src="img/calendar-ng.png" alt="NG" /></p>
+
+</div>
+<div class="step" data-y="800" data-x="4800">
+<h2>日付の扱い(3)</h2>
+
+<ul>
+<li>結局、Time::Piece->strftimeで<a href="http://tools.ietf.org/html/rfc5545#section-3.3.4">DATE型</a>を直接文字列として出力するようにした。</li>
+</ul>
+
+<p><img src="img/calendar-ok.png" alt="OK" /></p>
+
+</div>
+<div class="step" data-y="1600" data-x="0">
+<h2>できたもの</h2>
+
+<p>こちらになります</p>
+
+</div>
+<div class="step" data-y="1600" data-x="1200">
+<h2>まとめ</h2>
+
+<ul>
+<li>Data::ICalはわりと素直</li>
+<li>iCalendarの仕様に軽く目を通しておいたほうが使いやすい
+<ul>
+<li>プロパティの名前がiCalendarそのままなので</li>
+</ul></li>
+<li>DATE-TIME型でなくてDATE型を扱う場合は今のところ適切なモジュールはなさそう</li>
+</ul>
+
+</div>
+
+
+    <div id="overview" class="step" data-x="3000" data-y="1500" data-scale="10">
+    </div>
+
+</div>
+
+<div class="hint">
+    <p>Use a spacebar or arrow keys to navigate</p>
+</div>
+<script>
+if ("ontouchstart" in document.documentElement) { 
+    document.querySelector(".hint").innerHTML = "<p>Tap on the left or right to navigate</p>";
+}
+</script>
+<script src="js/impress.js"></script>
+
+</body>
+</html>
+
