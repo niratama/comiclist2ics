@@ -104,7 +104,7 @@ iCalendarの出力例
 できたもの
 ----
 
-こちらになります
+* [こちら](https://github.com/niratama/comiclist2ics)になります
 
 
 まとめ
